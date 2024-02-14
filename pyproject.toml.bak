@@ -8,9 +8,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.11"
-gym = {extras = ["other"], version = "^0.26.2"}
-nes-py = "8.2.1"
-gym-super-mario-bros = "7.4.0"
+gymnasium = {extras = ["box2d"], version = "^0.29.1"}
+nes-py = {path = "custom_packages/nes_py-8.3.0-cp311-cp311-win_amd64.whl"}
+gym-super-mario-bros = {path = "custom_packages/gym_super_mario_bros-7.5.0-py3-none-any.whl"}
 ipykernel = "^6.29.2"
 pygame = "^2.5.2"
 swig = "^4.2.0"
