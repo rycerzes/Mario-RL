@@ -19,6 +19,8 @@ stable-baselines3 = "2.2.1"
 numpy = "^1.26.4"
 matplotlib = "^3.8.2"
 torchrl = "^0.3.0"
+gymnasium = "0.29.1"
+moviepy = "1.0.3"
 
 [[tool.poetry.source]]
 name = "torch-cu121"
