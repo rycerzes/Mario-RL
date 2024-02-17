@@ -21,16 +21,35 @@ matplotlib = "^3.8.2"
 torchrl = "^0.3.0"
 gymnasium = "0.29.1"
 moviepy = "1.0.3"
+shimmy = "^1.3.0"
 
 [[tool.poetry.source]]
 name = "torch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
 priority = "supplemental"
 
+
 [[tool.poetry.source]]
 name = "torch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 priority = "supplemental"
+
+
+[[tool.poetry.source]]
+name = "gymnasium-smb"
+url = "https://github.com/rycerzes/gymnasium-smb.git"
+priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "nes-py"
+url = "https://github.com/rycerzes/nes-py.git"
+priority = "primary"
+
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
 
 [build-system]
 requires = ["poetry-core"]
