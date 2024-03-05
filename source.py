@@ -1,80 +1,82 @@
-from cuda_test import cuda_availability as cuda_chk
-from hyperparams import create_dqn,create_double_q
-from environment import create_env
-from stable_baselines3.common.evaluation import evaluate_policy
-from actions import simple
-from q_val import get_q_values
-from runner import run_episode
-from monitor import MonitorQValueCallback
 import numpy as np
-import matplotlib.pyplot as plt
-import os
+import torch as th
+import torch.nn as nn
+class DQNSolver(nn.Module):
+    """
+    Convolutional Neural Net with 3 conv layers and two linear layers
+    """
+    def _init_(self, input_shape, n_actions):
+        super(DQNSolver, self)._init_()
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
 
-cuda_chk()
-env = create_env()
-dqn_model = create_dqn(env)
-ddqn_model = create_double_q(env)
+        # Move the entire model to GPU if available
+        if th.cuda.is_available():
+            self.conv = self.conv.cuda()
 
-mean_reward, std_reward = evaluate_policy(
-    dqn_model,
-    dqn_model.get_env(),
-    deterministic=True,
-    n_eval_episodes=20,
-)
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc = nn.Sequential(
+            nn.Linear(conv_out_size, 512),
+            nn.ReLU(),
+            nn.Linear(512, n_actions)
+        )
+    
+    def _get_conv_out(self, shape):
+        # Create a temporary input tensor on the same device as self.conv
+        device = next(self.parameters()).device
+        o = self.conv(th.zeros(1, *shape, device=device))
+        return int(np.prod(o.size()))
 
-print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    def forward(self, x):
+        conv_out = self.conv(x).view(x.size()[0], -1)
+        return self.fc(conv_out)
+    
 
-# dqn_model.learn(int(1e5), log_interval=10)
-monitor_ddqn_value_cb = MonitorQValueCallback()
-monitor_dqn_value_cb = MonitorQValueCallback()
+def get_q_values(ddqn_q_net, observation_space, device, obs):
+    assert obs.shape == observation_space, f"Invalid observation shape: {obs.shape}. Expected: {observation_space}"
 
-dqn_model.learn(int(1e5), log_interval=10, callback=monitor_dqn_value_cb)
-ddqn_model.learn(int(1e5), log_interval=10, callback=monitor_ddqn_value_cb)
+    # Move observation tensor to the specified device
+    obs_tensor = th.tensor(obs, dtype=th.float32).unsqueeze(0).to(device)
 
-mean_reward, std_reward = evaluate_policy(dqn_model, dqn_model.get_env(), deterministic=True, n_eval_episodes=20)
-print(f"mean_reward:{mean_reward:.2f} +/- {std_reward:.2f}")
+    # Move model to the same device as the observation tensor
+    ddqn_q_net = ddqn_q_net.to(device)
 
-obs, _ = env.reset()
-initial_state = obs
-print(dqn_model)
-print(env)
-print("obs.shape:", obs.shape)
-print ("env.action_space:", env.action_space)
-print("observation_space_shape:",env.observation_space.shape)
-print(env.step,"\n")
-print(env.metadata,"\n")
-print(env.observation_space,"\n")
-obs = obs.flatten()
-print(obs.shape)
-print(obs)
+    with th.no_grad():
+        q_values = ddqn_q_net(obs_tensor)
 
-q_values = get_q_values(dqn_model, initial_state)
-print(q_values)
-q_value_nothing = q_values[0]
-q_value_left = q_values[1]
-q_value_main = q_values[2]
-q_value_right=q_values[3]
+    # Move q_values tensor back to CPU before converting to numpy array
+    q_values = q_values.cpu().numpy()
 
-print(f"Q-value of the initial state left={q_value_left:.2f} nothing={q_value_nothing:.2f} right={q_value_right:.2f}")
-action = np.argmax(q_values)
-print(f"Action taken by the greedy policy in the initial state: {simple[action]}")
+    assert isinstance(q_values, np.ndarray), "The returned q_values is not a numpy array"
+    assert q_values.shape == (1, n_actions), f"Wrong shape: (1, {n_actions}) was expected but got {q_values.shape}"
 
-initial_q_value = q_values.max()
-print(initial_q_value)
+    return q_values
 
-reward = run_episode()
-print(f"Sum of discounted rewards: {reward:.2f}")
 
-plt.figure(figsize=(6, 3), dpi=150)
-plt.title("Evolution of max q-value for start states over time")
-plt.plot(monitor_dqn_value_cb.timesteps, monitor_dqn_value_cb.max_q_values, label="DQN", color="pink")
-plt.plot(monitor_ddqn_value_cb.timesteps, monitor_ddqn_value_cb.max_q_values, label="DDQN", color="purple")
-plt.legend()
+# Example usage:
+# Assuming ddqn_q_net is an instance of DQNSolver and observation_space is a tuple representing the shape of observations
+# obs = np.random.randn(*observation_space)
+# device = th.device("cuda" if th.cuda.is_available() else "cpu")
+# q_values = get_q_values(ddqn_q_net, observation_space, device, obs)
 
-# Create the graphs folder if it doesn't exist
-graphs_folder = "graphs"
-os.makedirs(graphs_folder, exist_ok=True)
+# Assuming ddqn_q_net is an instance of DQNSolver and observation_space is a tuple representing the shape of observations
+obs_shape = (3, 84, 84)  # Example observation shape
+n_actions = 5  # Example number of actions
 
-# Save the graph in the graphs folder
-graph_filepath = os.path.join(graphs_folder, "q_value_evolution.png")
-plt.savefig(graph_filepath)
+ddqn_q_net = DQNSolver(obs_shape, n_actions)  # Create an instance of DQNSolver
+observation_space = obs_shape  # Example observation space
+device = th.device("cuda" if th.cuda.is_available() else "cpu")  # Determine device
+
+# Generate a random observation
+obs = np.random.randn(*observation_space)
+
+# Get Q-values
+q_values = get_q_values(ddqn_q_net, observation_space, device, obs)
+
+print("Q-values:", q_values)
