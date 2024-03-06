@@ -1,3 +1,4 @@
+#download and install ffmpeg on the testbench
 from stable_baselines3.common.vec_env import VecVideoRecorder, DummyVecEnv
 import gymnasium as gym
 
