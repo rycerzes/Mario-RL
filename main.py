@@ -64,7 +64,8 @@ for i in range(NUM_OF_EPISODES):
 
     print("Total reward:", total_reward, "Epsilon:", agent.epsilon, "Size of replay buffer:", len(agent.replay_buffer), "Learn step counter:", agent.learn_step_counter)
 
-    if SHOULD_TRAIN and (i + 1) % CKPT_SAVE_INTERVAL == 0:
+    #if SHOULD_TRAIN and (i + 1) % CKPT_SAVE_INTERVAL == 0:
+    if SHOULD_TRAIN:
         agent.save_model(os.path.join(model_path, "model_" + str(i + 1) + "_iter.pt"))
 
     print("Total reward:", total_reward)
