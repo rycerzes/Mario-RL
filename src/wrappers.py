@@ -12,11 +12,13 @@ class SkipFrame(Wrapper):
         total_reward = 0.0
         done = False
         for _ in range(self.skip):
-            next_state, reward, done, trunc, info = self.env.step(action)
+         #   next_state, reward, done,trunc, info = self.env.step(action)
+            next_state, reward, done, info = self.env.step(action)
             total_reward += reward
             if done:
                 break
-        return next_state, total_reward, done, trunc, info
+        # return next_state, total_reward, done, trunc, info
+        return next_state, total_reward, done, info
     
 
 def apply_wrappers(env):

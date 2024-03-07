@@ -20,13 +20,13 @@ if torch.cuda.is_available():
 else:
     print("CUDA is not available")
 
-ENV_NAME = 'SuperMarioBros-1-1-v0'
+ENV_NAME = 'SuperMarioBros-v0'
 SHOULD_TRAIN = True
 DISPLAY = True
 CKPT_SAVE_INTERVAL = 5000
 NUM_OF_EPISODES = 50_000
 
-env = gym_super_mario_bros.make(ENV_NAME, render_mode='human' if DISPLAY else 'rgb', apply_api_compatibility=True)
+env = gym_super_mario_bros.make(ENV_NAME)
 env = JoypadSpace(env, RIGHT_ONLY)
 
 env = apply_wrappers(env)
@@ -42,16 +42,18 @@ if not SHOULD_TRAIN:
     agent.eps_decay = 0.0
 
 env.reset()
-next_state, reward, done, trunc, info = env.step(action=0)
+next_state, reward, done, info = env.step(action=0)
 
 for i in range(NUM_OF_EPISODES):    
     print("Episode:", i)
     done = False
-    state, _ = env.reset()
+    # state, _ = env.reset()
+    state = env.reset()
     total_reward = 0
     while not done:
+        env.render()
         a = agent.choose_action(state)
-        new_state, reward, done, truncated, info  = env.step(a)
+        new_state, reward, done, info  = env.step(a)
         total_reward += reward
 
         if SHOULD_TRAIN:

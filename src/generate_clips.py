@@ -28,7 +28,7 @@ class SkipFrame(Wrapper):
             total_reward += reward
             if done:
                 break
-        return next_state, total_reward, done, trunc, info
+        return next_state, total_reward, done, info
     
     def reset(self, **kwargs):
         state, info = self.env.reset(**kwargs)
