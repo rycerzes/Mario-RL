@@ -5,11 +5,6 @@
   <h1 align="center">Mario-RL</h1>
 </a>
 
-<p align="center">
-  Project Synopsis<br>
-  Project stack in short
-</p>
-
 ## 🚧Our Project :
 
 Our project encompassed training an AI agent to master Super Mario Bros using reinforcement learning , Python, and the nes-py emulator. After establishing the development environment and integrating the AI agent with the emulator, we have employed reinforcement learning algoirthms. This enabled the AI to learn strategies via trial and error, dynamically adjusting to game obstacles.
